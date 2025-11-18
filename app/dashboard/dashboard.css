@@ -1,0 +1,13 @@
+.charts-size {
+    height: 500px;
+    width: 100%;
+}
+
+.background {
+    background-color: rgb(245, 245, 245);
+}
+
+.content-wrapper {
+    min-height: calc(100vh - 72px);
+    /* Adjust 72px to match your actual header height */
+}

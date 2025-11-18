@@ -5,19 +5,36 @@ import type { ReactNode } from "react";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { useRouter } from "next/navigation"
+import { signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
+import type { MenuProps } from "antd";
+import { Dropdown, Space } from "antd";
+import { UserOutlined, SettingOutlined } from "@ant-design/icons";
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'antd/dist/reset.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import '@sweetalert2/theme-bootstrap-4/bootstrap-4.min.css';
 
+import React from "react";
 import Swal from 'sweetalert2';
 import Image from 'next/image'
-import Link from "next/link"
+import Link from "next/link";
 
-export default function header() {
+interface HeaderProps {
+    menuOpen: boolean;
+    setMenuOpen: (open: boolean) => void;
+}
+
+export default function header({ menuOpen, setMenuOpen }: HeaderProps) {
 
     const router = useRouter();
+
+    const { data: session } = useSession();
+    const roles = (session as any)?.roles || [];
+    const firstName = (session as any)?.firstName || '';
+    const lastName = (session as any)?.lastName || '';
+    const fullName = firstName && lastName ? `${firstName} ${lastName}` : session?.user?.name || 'User';
 
     const handleLogout = async () => {
         Swal.fire({
@@ -25,50 +42,110 @@ export default function header() {
             title: "Are you sure you want to log out?",
             allowOutsideClick: false,
             allowEscapeKey: false,
-            showCancelButton: true,
+            showDenyButton: true,
             confirmButtonText: "Yes",
             denyButtonText: "Keep me logged in"
-        }).then((result) => {
+        }).then(async (result) => {
 
             if (result.isConfirmed) {
                 Swal.fire({
-                title: 'Logging out...',
-                timer: 3000,
-                didOpen: () => {
-                    Swal.showLoading();
-                },
-                allowOutsideClick: false,
-                allowEscapeKey: false,
-                showConfirmButton: false
-                }).then(() => {
-                    router.push("/login");
+                    title: 'Logging out...',
+                    timer: 3000,
+                    didOpen: async () => {
+                        Swal.showLoading();
+                        // Clear the session and cookie DURING the loading
+                        // await signOut({ redirect: false });
+                    },
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showConfirmButton: false
+                }).then(async (result) => {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Successfully logged out!',
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        confirmButtonText: "Yes",
+                    }).then(async (result) => {
+                        // Clear the session and cookie DURING the loading
+                        await signOut({ redirect: false });
+                        // AFTER the 3000ms timer and signOut completes, redirect to login
+                        router.push("/login");
+                    })
+                    
                 })
             }
-            
         })
-        
     }
+
+    
+    // Menu items for the profile dropdown
+    const profileMenuItems: MenuProps["items"] = [
+        {
+        key: "label",
+        disabled: true,
+        // Using a custom header label
+        label: (
+            <div className="small text-secondary">
+            Signed in as <strong>{fullName}</strong>
+            </div>
+        ),
+        },
+        { type: "divider" },
+        { key: "profile", label: "Profile", icon: <UserOutlined />},
+        { key: "settings", label: "Settings", icon: <SettingOutlined />},
+        { type: "divider" },
+        { key: "logout", label: <span className="text-danger">Log out</span>},
+    ];
+
+    // Handle dropdown item clicks
+    const onProfileMenuClick: MenuProps["onClick"] = async (info) => {
+        switch (info.key) {
+        case "profile":
+            router.push("/dashboard/profile");
+            break;
+        case "settings":
+            router.push("/dashboard/settings");
+            break;
+        case "logout":
+            await handleLogout();
+            break;
+        default:
+            break;
+        }
+    };
+
 
     return (
         <div className="flex-grow-1">
-            <div className="d-flex align-items-center justify-content-between p-3 border-bottom">
-                <h5 className="p-0 m-0 text-secondary">Hello, Muhammad Idzhans Khairi!</h5>
-                <div className="d-flex justify-content-end align-items-center">
-                    <a className="text-dark text-decoration-none p-2 me-3 icon-link">
-                        <i className="d-flex bi bi-gear"></i>
-                    </a>
+            <div className="d-flex align-items-center justify-content-between p-3 background-color-header">
 
-                    <a className="text-dark text-decoration-none p-2 me-3 icon-link">
-                        <i className="d-flex bi bi-person-circle"></i>
-                    </a>
+                <div className="d-flex align-items-center justify-content-center">
 
-                    <a className="text-dark text-decoration-none hover-opacity p-2 icon-link" onClick={(e) => {
-                        e.preventDefault;
-                        handleLogout()
-                    }}>
-                        <i className="d-flex bi bi-box-arrow-right"></i>
+                    {/* <a className={`text-dark text-decoration-none p-1 me-3 menu-button ${menuOpen ? "open" : ""}`} onClick={() => setMenuOpen(!menuOpen)}> */}
+                    <a className={`text-dark text-decoration-none p-1 mx-3 ms-2 menu-button ${menuOpen ? "open" : ""}`} onClick={() => setMenuOpen(!menuOpen)}>
+                        <i className={`d-flex bi ${menuOpen ? "bi-x" : "bi-list"} text-white fs-3`} />
                     </a>
+                    
+                    <div className="d-flex align-items-center ms-2">
+                        <Image className="me-3" src="/images/jpph_logo.png" alt="Example Logo" width={40} height={40}></Image>
+                        <h5 className="text-white medium p-0, m-0"><strong>JPPH Registration</strong></h5>
+                    </div>
                 </div>
+
+                <div className="d-flex align-items-center">
+                    <Dropdown trigger={["click"]} placement="bottom" menu={{ items: profileMenuItems, onClick: onProfileMenuClick }}>
+                        {/* Anchor wrapper required by AntD; prevent default navigation */}
+                        <a className="text-dark text-decoration-none p-2 icon-link" onClick={(e) => e.preventDefault()}>
+                        <Space>
+                            <i className="d-flex bi bi-person-fill text-white fs-5" />
+                        </Space>
+                        </a>
+                    </Dropdown>
+                    <span className="text-white ms-2"><strong>{fullName}</strong></span>
+                </div>
+                
+
             </div>
         </div>
     )

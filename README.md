@@ -125,6 +125,54 @@ git push -u origin main
 ```
 
 ## Keycloak usage:
+Start a new persistent keycloack container in docker:
+```cmd
+docker run -d --name nextjs_keycloak ^
+  -p 8080:8080 ^
+  -e KEYCLOAK_ADMIN=admin ^
+  -e KEYCLOAK_ADMIN_PASSWORD=admin ^
+  -v keycloak-data:/opt/keycloak/data ^
+  quay.io/keycloak/keycloak:21.1.1 ^
+  start-dev
+```
+
+Later you can restart it with:
+```cmd
+docker start keycloak   :: next day start
+docker stop keycloak    :: stop when you’re done
+docker logs -f keycloak :: see logs if needed
+
+```
+
+In the Keycloak portal, in the client, set:
+Valid redirect URIs: http://localhost:3000/api/auth/callback/keycloak
+
+Web origins: http://localhost:3000
+
+And then go back to the created client, add predefined mappers:
+`realm roles`
+
+```
+You need to configure Keycloak to include roles in the token. Do this:
+
+In Keycloak Admin Console, go to your client:
+    Clients → Your Client → Client Scopes tab
+    Click on <client-id>-dedicated (or the default scope)
+
+Add "roles" mapper to the scope:
+
+    Go to Mappers → Create
+    Name: roles
+    Mapper Type: User Realm Role
+    Token Claim Name: realm_access.roles (or just roles)
+    Add to ID Token: ON
+    Add to access token: ON
+    Add to userinfo: ON
+```
+
+
+
+
 
 
 

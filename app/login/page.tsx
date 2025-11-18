@@ -1,11 +1,49 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useEffect } from "react";
+import { signIn } from "next-auth/react";
 import Image from 'next/image'
 
 export default function LoginPage() {
+  
   const router = useRouter();
-  const handleLogin = () => router.push("/dashboard"); // redirect after login
+  const params = useSearchParams();
+  const error = params.get("error");
+
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+
+  // If NextAuth reports an error (eg, providor/authorize failure), go to /unauthorized
+  useEffect(() => {
+    if(error) router.replace("/unauthorized");
+  }, [error, router]);
+
+  const [loading, setLoading] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
+
+  const handleLogin = async () => {
+    // Use NextAuth Credentials provider (server-side hits Keycloack token endpoint)
+    setLoading(true);
+    setLoginError(null);
+    const result = await signIn("credentials", {
+      redirect: false,
+      username,
+      password,
+    });
+    setLoading(false);
+
+    if (result?.ok && result.url) {
+      // router.push(result.url);
+      router.push("/dashboard")
+    }
+    else {
+      router.push("/unauthorized")
+    }
+  }
+
+
+  // const handleLogin = () => router.push("/dashboard"); // redirect after login
 
   return (
 
@@ -18,11 +56,12 @@ export default function LoginPage() {
 
       <div className="p-4 border rounded bg-white">
         <h3 className="text-center mb-3">Login</h3>
-        <input className="form-control mb-3" placeholder="Username" />
-        <input className="form-control mb-3" type="password" placeholder="Password" />
-        <button className="btn btn-primary w-100" onClick={handleLogin}>
-          Login
+        <input className="form-control mb-3" placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} autoComplete="username"/>
+        <input className="form-control mb-3" type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password"/>
+        <button className="btn btn-primary w-100" onClick={handleLogin} disabled={ loading || !username.trim() || !password.trim()}>
+          {loading ? "Logging in..." : "Login"}
         </button>
+        {loginError && <div className="text-danger mb-2">{loginError}</div>}
       </div>
 
     </div>

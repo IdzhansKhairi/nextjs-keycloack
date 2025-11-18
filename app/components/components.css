@@ -2,7 +2,7 @@
 .sidebar-link {
   color: white;
   text-decoration: none;
-  display: flex;
+  /* display: flex; */
   align-items: center;
   border-radius: 10px;
   transition: all 0.2s;
@@ -26,8 +26,72 @@
 }
 
 .icon-link:hover {
-  background-color: rgba(75, 75, 75, 0.2);
+  background-color: rgba(255, 255, 255, 0.1);
   border-radius: 50%;
   font-weight: bold;
   cursor: pointer;
+}
+
+.background-color-header {
+  background-color: rgb(26, 26, 26);
+}
+
+.menu-button {
+  transition: all 0.2s ease-in-out;
+}
+
+.menu-button i {
+  transition: transform 0.2s ease-in-out;
+}
+
+.menu-button.open i {
+  transform: rotate(90deg);
+}
+
+.menu-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+/* Sidebar animation */
+.sidebar {
+  /* transition: width 0.3s ease-in-out, opacity 0.3s ease-in-out, padding 0.3s ease-in-out; */
+  width: 250px;
+  opacity: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  height: 100vh;
+}
+
+.sidebar.closed {
+  position: fixed;
+  width: 0;
+  padding: 0;
+  opacity: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  height: 100vh;
+}
+
+
+/* Hover state */
+/* .ant-menu-item:hover a {
+  color: #0d6efd; 
+  background-color: rgba(255, 255, 255, 0.1); 
+} */
+
+
+.ant-menu-dark .ant-menu-item-selected {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.ant-menu-dark.ant-menu-inline .ant-menu-sub.ant-menu-inline {
+  background: #212529;
+}
+
+.ant-menu-dark .ant-menu-submenu-selected>.ant-menu-submenu-title {
+  transition: all 0.3s ease-in-out;
+  font-weight: bold;
 }
